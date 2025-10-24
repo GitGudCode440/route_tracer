@@ -1,7 +1,11 @@
 #include <GLFW/glfw3.h>
 
+#include "osmium_test.hpp"
+
 int main(void)
 {
+    parseMap();
+
     GLFWwindow* window;
 
     if (!glfwInit())

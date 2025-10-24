@@ -1,3 +1,9 @@
 [submodule "libs/glfw"]
 	path = libs/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "libs/libosmium"]
+	path = libs/libosmium
+	url = https://github.com/osmcode/libosmium
+[submodule "libs/protozero"]
+	path = libs/protozero
+	url = https://github.com/mapbox/protozero
