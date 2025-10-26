@@ -1,10 +1,12 @@
 #include <GLFW/glfw3.h>
 
-#include "osmium_test.hpp"
+#include "map_data.hpp"
+#include "Astar.hpp"
 
 int main(void)
 {
     parseMap();
+    Astar();
 
     GLFWwindow* window;
 
