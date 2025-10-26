@@ -8,7 +8,8 @@ set(BUILD_EXAMPLES OFF)
 # Add executable
 add_executable(route_tracer
     src/main.cpp
-    src/osmium_test.cpp
+    src/map_data.cpp
+    src/astar.cpp
 )
 
 # Add GLFW subdirectory
@@ -28,6 +29,8 @@ target_include_directories(route_tracer PRIVATE
     libs/libosmium/include
     libs/protozero/include
 )
+
+
 
 # Link libraries
 target_link_libraries(route_tracer PRIVATE
