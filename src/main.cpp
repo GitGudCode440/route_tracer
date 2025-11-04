@@ -1,7 +1,7 @@
 #include <GLFW/glfw3.h>
 
 #include "map_data.hpp"
-#include "Astar.hpp"
+#include "astar.hpp"
 
 int main(void)
 {
