@@ -8,7 +8,7 @@
 class Windower {
 private:
     GLFWwindow* m_window;
-    const Renderer& m_renderer;
+    Renderer& m_renderer;
 
     int m_windowWidth;
     int m_windowHeight;
@@ -18,7 +18,7 @@ private:
     void resizeViewport(GLFWwindow* window, int width, int height);
 
 public:
-    Windower(const Renderer& renderer, int windowWidth, int windowHeight);
+    Windower(Renderer& renderer, int windowWidth, int windowHeight);
     void run();
     ~Windower();
 };

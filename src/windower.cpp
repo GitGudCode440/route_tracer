@@ -2,7 +2,7 @@
 
 #include "windower.hpp"
 
-Windower::Windower(const Renderer& renderer, int windowWidth, int windowHeight)
+Windower::Windower(Renderer& renderer, int windowWidth, int windowHeight)
     : m_renderer(renderer), m_windowWidth(windowWidth), m_windowHeight(windowHeight)
 {
     if (!glfwInit()) {
@@ -49,7 +49,7 @@ void Windower::processInput() {
     }
 }
 
-void Windower::resizeViewport(GLFWwindow* /*window*/, int width, int height) {
+void Windower::resizeViewport(GLFWwindow* window, int width, int height) {
     m_windowWidth = width;
     m_windowHeight = height;
     glViewport(0, 0, m_windowWidth, m_windowHeight);
