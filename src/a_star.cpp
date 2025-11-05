@@ -115,8 +115,8 @@ std::vector<int64_t> astar(int64_t start, int64_t goal) {
     return {};
 }
 
-void Astar() {
-    const std::string map_file = "/home/kali/source/repos/route_tracer/data/karachi.osm.pbf";
+void aStar() {
+    const std::string map_file = "/home/mmaha/Documents/repos/route_tracer/data/karachi.osm.pbf";
     loadKarachiMap(map_file);
 
     int64_t start, goal;
@@ -134,7 +134,7 @@ void Astar() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::stringstream filename;
-    filename << "/home/kali/source/repos/route_tracer/data/path_output_"
+    filename << "/home/mmaha/Documents/repos/route_tracer/data/path_output_"
              << std::put_time(std::localtime(&t), "%Y%m%d_%H%M%S") << ".txt";
 
     std::ofstream outfile(filename.str());
