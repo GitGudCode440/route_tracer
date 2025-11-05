@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.50)
-project(route_tracer CXX)
+project(route_tracer CXX C)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -10,6 +10,9 @@ add_executable(route_tracer
     src/main.cpp
     src/map_data.cpp
     src/a_star.cpp
+    src/renderer.cpp
+    src/windower.cpp
+    libs/glad/src/glad.c
 )
 
 # Add custom CMake module paths
@@ -25,6 +28,7 @@ find_package(OpenGL REQUIRED)
 target_include_directories(route_tracer PRIVATE
     libs/libosmium/include
     libs/protozero/include
+    libs/glad/include
 )
 
 
@@ -33,7 +37,6 @@ target_include_directories(route_tracer PRIVATE
 target_link_libraries(route_tracer PRIVATE
     glfw
     OpenGL::GL
-    GLEW
     ZLIB::ZLIB
     BZip2::BZip2
     EXPAT::EXPAT
