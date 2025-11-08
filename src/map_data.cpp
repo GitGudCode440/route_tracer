@@ -74,7 +74,7 @@ public:
 };
 
 void parseMap() {
-    const std::string input_file = "/home/kali/source/repos/route_tracer/data/karachi.osm.pbf";
+    const std::string input_file = "./data/karachi.osm.pbf";
 
     try {
         osmium::io::Reader reader(input_file);
@@ -87,7 +87,7 @@ void parseMap() {
         auto now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
         std::stringstream filename;
-        filename << "/home/kali/source/repos/route_tracer/data/output_"
+        filename << "./data/output_"
                  << std::put_time(std::localtime(&t), "%Y%m%d_%H%M%S")
                  << ".txt";
 

@@ -5,6 +5,9 @@ project(route_tracer CXX C)
 set(CMAKE_CXX_STANDARD 17)
 set(BUILD_EXAMPLES OFF)
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 # Add executable
 add_executable(route_tracer
     src/main.cpp

@@ -11,6 +11,8 @@
 
 int main(void)
 {  
+    parseMap();
+    
     Renderer renderer;
     Windower windower(renderer, 800, 640);
     windower.run();
