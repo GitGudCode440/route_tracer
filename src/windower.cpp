@@ -10,6 +10,8 @@ Windower::Windower(Renderer& renderer, int windowWidth, int windowHeight)
         return;
     }
 
+    std::cout << glfwGetPlatform() << std::endl;
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -31,15 +33,34 @@ Windower::Windower(Renderer& renderer, int windowWidth, int windowHeight)
     glfwSetFramebufferSizeCallback(m_window, m_framebufferSizeCallback);
     glfwSetWindowUserPointer(m_window, this);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;     
+
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);          
+    ImGui_ImplOpenGL3_Init();
+
     m_renderer.defineGeometry();
 }
 
 void Windower::run() {
     while (!glfwWindowShouldClose(m_window)) {
-        processInput();
-        m_renderer.render();
-        glfwSwapBuffers(m_window);
         glfwPollEvents();
+        processInput();        
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+
+        m_renderer.render();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+        glfwSwapBuffers(m_window);
     }
 }
 
@@ -61,6 +82,10 @@ void Windower::m_framebufferSizeCallback(GLFWwindow* window, int width, int heig
 }
 
 Windower::~Windower() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
