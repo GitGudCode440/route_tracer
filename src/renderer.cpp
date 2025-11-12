@@ -11,14 +11,13 @@ void Renderer::render() const
 
 void Renderer::defineGeometry() 
 {
-    //Dealing with vertices
     GLuint VBO;
     glGenBuffers(1, &VBO);
 
-    glGenVertexArrays(1, &m_VAO);
+    GLuint VAO;
+    glGenVertexArrays(1, &VAO);
 
-    glBindVertexArray(m_VAO);
-
+    glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(m_vertices), m_vertices, GL_STATIC_DRAW);
@@ -26,41 +25,26 @@ void Renderer::defineGeometry()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    printShaderErrors(vertexShader);
+    GLuint vertexShader = createShader(GL_VERTEX_SHADER, vertexShaderSource);
 
     //Fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    printShaderErrors(fragmentShader);
+    GLuint fragmentShader = createShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
     //Linking shaders into a program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
+    GLuint shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
     m_shaderProgram = shaderProgram;
-
-    
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "Shader Linking Error: " << infoLog << std::endl; 
-    }
+ 
 }
 
-void Renderer::printShaderErrors(GLuint shader) const {
+GLuint Renderer::createShader(GLenum type, const std::string& source) {
+    GLuint shader = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(shader, 1, &src, nullptr);
+    glCompileShader(shader);
+
+    // Error checking
     GLint status = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status) {
@@ -70,4 +54,28 @@ void Renderer::printShaderErrors(GLuint shader) const {
         glGetShaderInfoLog(shader, length, &length, &log[0]);
         std::cerr << "Shader compile error: " << log << std::endl;
     }
+
+    return shader;
+}
+
+GLuint Renderer::linkShadersIntoProgram(const std::vector<GLuint>&& shaders) {
+    GLuint shaderProgram = glCreateProgram();
+
+    for(const auto& i : shaders) 
+        glAttachShader(shaderProgram, i);
+    
+    glLinkProgram(shaderProgram);
+
+
+    // Error checking
+    int success;
+    char infoLog[512];
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "Shader Linking Error: " << infoLog << std::endl; 
+    }
+
+
+    return shaderProgram;
 }
