@@ -12,6 +12,7 @@
 int main(void)
 {  
     parseMap();
+    aStar();
     
     Renderer renderer;
     Windower windower(renderer, 800, 640);

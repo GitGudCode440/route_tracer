@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "windower.hpp"
 
 Windower::Windower(Renderer& renderer, int windowWidth, int windowHeight)

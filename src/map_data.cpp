@@ -1,20 +1,5 @@
-// file: Map_Data.cpp
+#include "map_data.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <map>
-#include <vector>
-#include <osmium/io/any_input.hpp>
-#include <osmium/handler.hpp>
-#include <osmium/visitor.hpp>
-#include <osmium/osm/way.hpp>
-#include <unordered_set>
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
-// Structure to hold merged road info
 struct Road {
     std::string name;
     std::string type;
