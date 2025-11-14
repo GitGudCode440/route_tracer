@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <queue>
 #include <cmath>
@@ -11,10 +12,12 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 struct Node {
     double lat, lon;
 };
+
 struct Edge {
     int64_t to;
     double weight;
@@ -41,6 +44,7 @@ void loadKarachiMap(const std::string& filename) {
                 nodes[node.id()] = {node.location().lat(), node.location().lon()};
             }
         }
+
         void way(const osmium::Way& way) {
             const osmium::WayNodeList& wnl = way.nodes();
             for (auto it = wnl.begin(); std::next(it) != wnl.end(); ++it) {
@@ -61,8 +65,7 @@ void loadKarachiMap(const std::string& filename) {
         MapHandler handler;
         osmium::apply(reader, handler);
         reader.close();
-        std::cout << "Map loaded successfully! "
-                  << "Nodes: " << nodes.size()
+        std::cout << "Map loaded successfully! Nodes: " << nodes.size()
                   << "  Adjacencies: " << adj.size() << "\n";
     } catch (const std::exception& e) {
         std::cerr << "Error reading Karachi map: " << e.what() << "\n";
@@ -70,48 +73,75 @@ void loadKarachiMap(const std::string& filename) {
 }
 
 std::vector<int64_t> astar(int64_t start, int64_t goal) {
-    std::unordered_map<int64_t, double> gScore, fScore;
+    std::unordered_map<int64_t, double> gScore;
+    std::unordered_map<int64_t, double> fScore;
     std::unordered_map<int64_t, int64_t> parent;
 
-    for (const auto& p : nodes) {
-        gScore[p.first] = std::numeric_limits<double>::infinity();
-        fScore[p.first] = std::numeric_limits<double>::infinity();
-    }
-
-    auto cmp = [&](int64_t a, int64_t b) { return fScore[a] > fScore[b]; };
-    std::priority_queue<int64_t, std::vector<int64_t>, decltype(cmp)> open(cmp);
-
+    // Initialize scores only as needed (more efficient)
     gScore[start] = 0.0;
     fScore[start] = haversine(nodes[start].lat, nodes[start].lon,
                               nodes[goal].lat, nodes[goal].lon);
-    open.push(start);
 
-    while (!open.empty()) {
-        int64_t current = open.top();
-        open.pop();
+    // Use min-heap with proper comparison
+    auto cmp = [&](const std::pair<int64_t, double>& a, const std::pair<int64_t, double>& b) {
+        return a.second > b.second;
+    };
+    std::priority_queue<std::pair<int64_t, double>, 
+                       std::vector<std::pair<int64_t, double>>, 
+                       decltype(cmp)> openSet(cmp);
+
+    openSet.push({start, fScore[start]});
+    std::unordered_set<int64_t> inOpenSet;
+    inOpenSet.insert(start);
+
+    int nodes_explored = 0;
+
+    while (!openSet.empty()) {
+        auto current_pair = openSet.top();
+        int64_t current = current_pair.first;
+        openSet.pop();
+        inOpenSet.erase(current);
+
+        nodes_explored++;
 
         if (current == goal) {
             std::vector<int64_t> path;
-            for (int64_t at = goal; parent.find(at) != parent.end(); at = parent[at])
+            for (int64_t at = goal; at != start; at = parent[at]) {
                 path.push_back(at);
+            }
             path.push_back(start);
             std::reverse(path.begin(), path.end());
+            std::cout << "Path found! Nodes explored: " << nodes_explored << "\n";
             return path;
         }
 
+        if (!adj.count(current)) continue;
+
         for (const auto& edge : adj[current]) {
-            double tentative = gScore[current] + edge.weight;
-            if (tentative < gScore[edge.to]) {
+            double tentative_gScore = gScore[current] + edge.weight;
+            
+            // Initialize if not present
+            if (!gScore.count(edge.to)) {
+                gScore[edge.to] = std::numeric_limits<double>::infinity();
+            }
+
+            if (tentative_gScore < gScore[edge.to]) {
                 parent[edge.to] = current;
-                gScore[edge.to] = tentative;
-                fScore[edge.to] = tentative +
+                gScore[edge.to] = tentative_gScore;
+                fScore[edge.to] = tentative_gScore + 
                     haversine(nodes[edge.to].lat, nodes[edge.to].lon,
                               nodes[goal].lat, nodes[goal].lon);
-                open.push(edge.to);
+                
+                // Only push to open set if not already there with better score
+                if (inOpenSet.find(edge.to) == inOpenSet.end()) {
+                    openSet.push({edge.to, fScore[edge.to]});
+                    inOpenSet.insert(edge.to);
+                }
             }
         }
     }
 
+    std::cout << "No path found after exploring " << nodes_explored << " nodes.\n";
     return {};
 }
 
@@ -143,11 +173,23 @@ void Astar() {
         return;
     }
 
+    // Calculate straight-line distance for comparison
+    double straight_distance = haversine(nodes[start].lat, nodes[start].lon,
+                                         nodes[goal].lat, nodes[goal].lon);
+    std::cout << "Straight-line distance: " << straight_distance / 1000.0 << " km\n";
+
     // A*
+    std::cout << "Calculating shortest path...\n";
+    auto start_time = std::chrono::high_resolution_clock::now();
     std::vector<int64_t> path = astar(start, goal);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
     outfile << "Start Node ID: " << start << "\n";
     outfile << "Goal Node ID: " << goal << "\n";
+    outfile << "Straight-line distance: " << straight_distance / 1000.0 << " km\n";
+    outfile << "Google Maps distance: ~1.6 km\n";
+    outfile << "Calculation time: " << duration.count() << " ms\n";
     outfile << "------------------------------------\n";
 
     if (path.empty()) {
@@ -166,9 +208,17 @@ void Astar() {
             }
         }
         outfile << "\nTotal distance: " << total / 1000.0 << " km\n";
+        outfile << "Path length: " << path.size() << " nodes\n";
+        outfile << "Efficiency ratio: " << total / straight_distance << " (ideal: ~1.0)\n";
 
         std::cout << "Path saved successfully to: " << filename.str() << "\n";
         std::cout << "Total distance: " << total / 1000.0 << " km\n";
+        std::cout << "Efficiency ratio: " << total / straight_distance << " (ideal: ~1.0)\n";
+        
+        if (total / straight_distance > 1.3) {
+            std::cout << "WARNING: Path is significantly longer than straight-line distance!\n";
+            std::cout << "This may indicate missing direct road connections in the OSM data.\n";
+        }
     }
 
     outfile.close();
