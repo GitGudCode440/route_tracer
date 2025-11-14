@@ -145,7 +145,7 @@ std::vector<int64_t> astar(int64_t start, int64_t goal) {
     return {};
 }
 
-void Astar() {
+void aStar() {
     const std::string map_file = "/home/kali/source/repos/route_tracer/data/karachi.osm.pbf";
     loadKarachiMap(map_file);
 
