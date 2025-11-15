@@ -20,7 +20,6 @@
 struct Node {
     double lat, lon;
 };
-
 struct Edge {
     int64_t to;
     double weight;
