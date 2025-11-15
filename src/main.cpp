@@ -1,12 +1,12 @@
 #include <GLFW/glfw3.h>
 
 #include "map_data.hpp"
-#include "astar.hpp"
+#include "a_star.hpp"
 
-int main(void)
+int main()
 {
     parseMap();
-    Astar();
+    aStar();
 
     GLFWwindow* window;
 

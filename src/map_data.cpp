@@ -1,4 +1,4 @@
-// file: Map_Data.cpp
+// Map_Data.cpp (modified to include node lat/lon output)
 
 #include <iostream>
 #include <fstream>
@@ -10,6 +10,7 @@
 #include <osmium/visitor.hpp>
 #include <osmium/osm/way.hpp>
 #include <unordered_set>
+#include <unordered_map>
 #include <chrono>
 #include <iomanip>
 #include <sstream>
@@ -24,6 +25,14 @@ struct Road {
 class MyHandler : public osmium::handler::Handler {
 public:
     std::map<std::pair<std::string, std::string>, Road> mergedRoads;
+    // store node coordinates so we can print lat/lon for nodes referenced in ways
+    std::unordered_map<osmium::object_id_type, std::pair<double, double>> node_coords;
+
+    void node(const osmium::Node& node) {
+        if (node.location().valid()) {
+            node_coords[node.id()] = { node.location().lat(), node.location().lon() };
+        }
+    }
 
     void way(const osmium::Way& way) {
         const char* highway = way.tags()["highway"];
@@ -66,6 +75,40 @@ public:
                         << " → Nodes: " << seg.front()
                         << " ... " << seg.back()
                         << " (" << seg.size() << " nodes)\n";
+
+                    // print lat/lon for first and last node if available
+                    auto print_coord = [&](osmium::object_id_type nid) {
+                        auto it = node_coords.find(nid);
+                        if (it != node_coords.end()) {
+                            out << "     Node " << nid << " [lat: " << std::fixed << std::setprecision(7)
+                                << it->second.first << ", lon: " << it->second.second << "]\n";
+                        } else {
+                            out << "     Node " << nid << " [lat/lon: unknown]\n";
+                        }
+                    };
+
+                    // show first node coords
+                    print_coord(seg.front());
+                    // if more than 1 node, show last node coords
+                    if (seg.size() > 1) {
+                        print_coord(seg.back());
+                    }
+
+                    // (optional) show up to first 3 intermediate nodes' coords to help debugging
+                    size_t show_count = std::min<size_t>(3, seg.size());
+                    if (seg.size() > 2) {
+                        out << "     Sample intermediate nodes:\n";
+                        for (size_t k = 1; k <= show_count && k + 1 < seg.size(); ++k) {
+                            osmium::object_id_type nid = seg[k];
+                            auto it = node_coords.find(nid);
+                            if (it != node_coords.end()) {
+                                out << "       " << nid << " [lat: " << std::fixed << std::setprecision(7)
+                                    << it->second.first << ", lon: " << it->second.second << "]\n";
+                            } else {
+                                out << "       " << nid << " [lat/lon: unknown]\n";
+                            }
+                        }
+                    }
                 }
             }
             out << "------------------------------------\n";
