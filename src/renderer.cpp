@@ -8,7 +8,7 @@ void Renderer::render() const
 {   
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(m_shaderProgram);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 void Renderer::defineGeometry() 
@@ -19,11 +19,19 @@ void Renderer::defineGeometry()
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
 
+    GLuint EBO;
+    glGenBuffers(1, &EBO);
+
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
     
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(uint), m_indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -38,6 +46,7 @@ void Renderer::defineGeometry()
     GLuint shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
     m_shaderProgram = shaderProgram;
  
+
 }
 
 void Renderer::readShader(const std::string& filepath)
