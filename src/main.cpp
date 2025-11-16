@@ -11,10 +11,17 @@
 
 int main(void)
 {  
-    parseMap();
-    aStar();
+    // parseMap();
+    // aStar();
     
     Renderer renderer;
+    renderer.setVertices({
+        -0.5f, -0.5f, 1.0f,
+        0.5f, -0.5f, 1.0f,
+        0.0f, 0.5f, 1.0f
+    });
+   
+
     Windower windower(renderer, 800, 640);
     windower.run();
 
