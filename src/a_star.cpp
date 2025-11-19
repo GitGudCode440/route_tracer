@@ -27,6 +27,7 @@ struct Edge {
 };
 
 static std::unordered_map<int64_t, Node> nodes;
+static std::unordered_set<int64_t> valid_road_nodes;
 static std::unordered_map<int64_t, std::vector<Edge>> adj;
 static bool mapLoaded = false;
 
@@ -49,11 +50,26 @@ double haversine(double lat1, double lon1, double lat2, double lon2) {
 int64_t findNearestNode(double lat, double lon) {
     double bestDist = std::numeric_limits<double>::infinity();
     int64_t bestId = 0;
-    for (const auto &p : nodes) {
-        double d = haversine(lat, lon, p.second.lat, p.second.lon);
-        if (d < bestDist) {
-            bestDist = d;
-            bestId = p.first;
+    
+    // Only search nodes that are part of the road network
+    if (!valid_road_nodes.empty()) {
+        for (int64_t id : valid_road_nodes) {
+            if (!nodes.count(id)) continue;
+            const auto& node = nodes[id];
+            double d = haversine(lat, lon, node.lat, node.lon);
+            if (d < bestDist) {
+                bestDist = d;
+                bestId = id;
+            }
+        }
+    } else {
+        // Fallback if set is empty (shouldn't happen if map loaded)
+        for (const auto &p : nodes) {
+            double d = haversine(lat, lon, p.second.lat, p.second.lon);
+            if (d < bestDist) {
+                bestDist = d;
+                bestId = p.first;
+            }
         }
     }
     return bestId;
@@ -123,6 +139,10 @@ void loadKarachiMap(const std::string& filename) {
 
                 double d = haversine(nodes[id1].lat, nodes[id1].lon,
                                      nodes[id2].lat, nodes[id2].lon);
+
+                // Add nodes to valid set
+                valid_road_nodes.insert(id1);
+                valid_road_nodes.insert(id2);
 
                 if (oneway_reverse) {
                     // edge only from id2 -> id1
@@ -304,7 +324,7 @@ bool getNodeCoords(int64_t nodeId, double& lat, double& lon) {
 }
 
 void convertPathToVertices(const std::vector<int64_t>& pathNodeIds,
-                          const std::vector<float>& mapVertices,
+                          float midX, float midY, float scale,
                           std::vector<float>& outVertices,
                           std::vector<unsigned int>& outIndices) {
     outVertices.clear();
@@ -314,47 +334,7 @@ void convertPathToVertices(const std::vector<int64_t>& pathNodeIds,
         return;
     }
 
-    // Calculate normalization parameters from map vertices (reverse-engineer from normalized coords)
-    // The map vertices are normalized, so we need to find the normalization params
-    // We'll use the A* nodes to calculate mercator coords, then normalize using percentiles
-    std::vector<float> xs, ys;
-    xs.reserve(nodes.size());
-    ys.reserve(nodes.size());
-    
     const double deg2rad = M_PI / 180.0;
-    for (const auto& nodePair : nodes) {
-        double lat = nodePair.second.lat;
-        double lon = nodePair.second.lon;
-        
-        // Convert to Web Mercator
-        double lon_rad = lon * deg2rad;
-        double lat_rad = lat * deg2rad;
-        double x_merc = lon_rad;
-        double y_merc = 0.5 * std::log((1.0 + std::sin(lat_rad)) / (1.0 - std::sin(lat_rad)));
-        
-        xs.push_back(static_cast<float>(x_merc));
-        ys.push_back(static_cast<float>(y_merc));
-    }
-
-    auto percentile = [](std::vector<float>& v, double p) -> float {
-        if (v.empty()) return 0.0f;
-        size_t idx = static_cast<size_t>(std::floor(p * (v.size() - 1)));
-        std::vector<float> tmp = v;
-        std::nth_element(tmp.begin(), tmp.begin() + idx, tmp.end());
-        return tmp[idx];
-    };
-
-    float x_lo = percentile(xs, 0.05);
-    float x_hi = percentile(xs, 0.95);
-    float y_lo = percentile(ys, 0.05);
-    float y_hi = percentile(ys, 0.95);
-
-    float midX = (x_lo + x_hi) * 0.5f;
-    float midY = (y_lo + y_hi) * 0.5f;
-    float rangeX = x_hi - x_lo;
-    float rangeY = y_hi - y_lo;
-    float scale = std::max(rangeX, rangeY);
-    if (scale == 0.0f) scale = 1.0f;
 
     // Convert each node in path to vertices
     for (size_t i = 0; i < pathNodeIds.size(); ++i) {

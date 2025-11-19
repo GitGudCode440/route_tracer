@@ -29,6 +29,7 @@ int main(void)
     }
 
     Windower windower(renderer, 800, 640);
+    windower.setMapBounds(map.midX, map.midY, map.scale);
     windower.run();
 
 }

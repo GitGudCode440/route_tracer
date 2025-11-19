@@ -33,11 +33,23 @@ public:
     float m_camOY;
     float m_camScale;
 
+    // Map normalization params
+    float m_mapMidX = 0.0f;
+    float m_mapMidY = 0.0f;
+    float m_mapScale = 1.0f;
+
+    void setMapBounds(float midX, float midY, float scale) {
+        m_mapMidX = midX;
+        m_mapMidY = midY;
+        m_mapScale = scale;
+    }
+
     static void m_framebufferSizeCallback(GLFWwindow* window, int width, int height);
     static void m_mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     static void m_cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
     static void m_scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
     void processInput();
+    void handleMouseClick(int button, int action, double xpos, double ypos);
     void resizeViewport(GLFWwindow* window, int width, int height);
 
     Windower(Renderer& renderer, int windowWidth, int windowHeight);

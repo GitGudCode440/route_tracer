@@ -44,6 +44,19 @@ void Renderer::render() const
         glDrawElements(GL_LINE_STRIP, static_cast<GLsizei>(m_pathIndices.size()), GL_UNSIGNED_INT, 0);
         glLineWidth(1.5f);  // Reset to default
     }
+
+    // Render points if available with red color
+    if (m_hasPoints && !m_pointVertices.empty() && m_pointVAO != 0) {
+        if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
+        if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
+        if (m_uAspectLoc >= 0) glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
+        if (m_uColorLoc >= 0) glUniform3f(m_uColorLoc, 1.0f, 0.0f, 0.0f);  // Red
+        
+        glBindVertexArray(m_pointVAO);
+        glPointSize(10.0f);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(m_pointVertices.size() / 3));
+        glPointSize(1.0f);
+    }
 }
 
 void Renderer::defineGeometry() 
@@ -234,4 +247,28 @@ void Renderer::clearPath() {
     m_hasPath = false;
     m_pathVertices.clear();
     m_pathIndices.clear();
+}
+
+void Renderer::setPoints(const std::vector<float>& vertices) {
+    m_pointVertices = vertices;
+    m_hasPoints = !vertices.empty();
+
+    if (m_pointVAO == 0) {
+        glGenVertexArrays(1, &m_pointVAO);
+        glGenBuffers(1, &m_pointVBO);
+    }
+
+    glBindVertexArray(m_pointVAO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, m_pointVBO);
+    glBufferData(GL_ARRAY_BUFFER, m_pointVertices.size() * sizeof(float), m_pointVertices.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    glBindVertexArray(0);
+}
+
+void Renderer::clearPoints() {
+    m_hasPoints = false;
+    m_pointVertices.clear();
 }

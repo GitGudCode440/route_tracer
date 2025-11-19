@@ -25,6 +25,11 @@ private:
     GLuint m_pathVAO, m_pathVBO, m_pathEBO;
     bool m_hasPath = false;
 
+    // Point rendering (for start/end nodes)
+    std::vector<float> m_pointVertices;
+    GLuint m_pointVAO = 0, m_pointVBO = 0;
+    bool m_hasPoints = false;
+
     GLenum m_drawMode;
     std::vector<size_t> m_segmentOffsets;
     std::vector<size_t> m_segmentLengths;
@@ -67,6 +72,10 @@ public:
     void setPathVertices(const std::vector<float>& vertices);
     void setPathIndices(const std::vector<unsigned int>& indices);
     void clearPath();
+
+    // Point rendering methods
+    void setPoints(const std::vector<float>& vertices);
+    void clearPoints();
 
     void render() const;
     void defineGeometry();

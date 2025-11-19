@@ -37,16 +37,11 @@ void UIPanel::ShowUIPanel()
         ImGui::InputFloat("End Latitude", &m_endLat, 0.0f, 0.0f, "%.6f");
         ImGui::InputFloat("End Longitude", &m_endLon, 0.0f, 0.0f, "%.6f");
 
+        ImGui::Spacing();
         if (ImGui::Button("Run A* (Coordinates)")) m_runAStarWithCoords = true;
         ImGui::Spacing();
     }
 
-    ImGui::TextColored(ImVec4(0.9f, 0.5f, 0.2f, 1.0f), "Search Road");
-    ImGui::InputText("Road Name", m_searchBuffer, IM_ARRAYSIZE(m_searchBuffer));
-    if (ImGui::Button("Search")) m_searchRequested = true;
-
-    ImGui::TextColored(ImVec4(0.5f, 0.7f, 1.0f, 1.0f), "Path Color");
-    ImGui::ColorEdit3("Path Color", m_pathColor);
 
     
 

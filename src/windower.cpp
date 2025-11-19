@@ -120,8 +120,8 @@ void Windower::run() {
                 std::vector<float> pathVertices;
                 std::vector<unsigned int> pathIndices;
                 
-                // Pass empty mapVertices - function will calculate normalization from A* nodes
-                convertPathToVertices(result.nodeIds, std::vector<float>(), pathVertices, pathIndices);
+                // Pass map normalization params
+                convertPathToVertices(result.nodeIds, m_mapMidX, m_mapMidY, m_mapScale, pathVertices, pathIndices);
                 
                 std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
                 if (!pathVertices.empty() && !pathIndices.empty()) {
@@ -147,8 +147,8 @@ void Windower::run() {
                 std::vector<float> pathVertices;
                 std::vector<unsigned int> pathIndices;
                 
-                // Pass empty mapVertices - function will calculate normalization from A* nodes
-                convertPathToVertices(result.nodeIds, std::vector<float>(), pathVertices, pathIndices);
+                // Pass map normalization params
+                convertPathToVertices(result.nodeIds, m_mapMidX, m_mapMidY, m_mapScale, pathVertices, pathIndices);
                 
                 std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
                 if (!pathVertices.empty() && !pathIndices.empty()) {
@@ -186,15 +186,98 @@ void Windower::processInput() {
 void Windower::m_mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     Windower* win = reinterpret_cast<Windower*>(glfwGetWindowUserPointer(window));
     if (!win) return;
+
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+
     if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
         if (action == GLFW_PRESS) {
             win->m_middleDown = true;
-            double x, y;
-            glfwGetCursorPos(window, &x, &y);
             win->m_lastMouseX = x;
             win->m_lastMouseY = y;
         } else if (action == GLFW_RELEASE) {
             win->m_middleDown = false;
+        }
+    } else {
+        win->handleMouseClick(button, action, x, y);
+    }
+}
+
+void Windower::handleMouseClick(int button, int action, double xpos, double ypos) {
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        // Convert screen to NDC
+        double ndc_x = (2.0 * xpos) / static_cast<double>(m_windowWidth) - 1.0;
+        double ndc_y = -((2.0 * ypos) / static_cast<double>(m_windowHeight) - 1.0);
+
+        // Convert NDC to World (Normalized Map Coords)
+        // Shader: gl_Position = vec4((pos.x - offset.x) * scale * aspect, (pos.y - offset.y) * scale, 0.0, 1.0);
+        // ndc_x = (world_x - ox) * scale * aspect
+        // ndc_y = (world_y - oy) * scale
+        
+        double aspect = static_cast<double>(m_windowHeight) / static_cast<double>(m_windowWidth);
+        double world_x = (ndc_x / (m_camScale * aspect)) - m_camOX;
+        double world_y = (ndc_y / m_camScale) - m_camOY;
+
+        // Convert World (Normalized) to Mercator
+        // nx = (x_merc - midX) * (2.0f / scale);
+        // x_merc = nx * (scale / 2.0f) + midX;
+        double x_merc = world_x * (m_mapScale / 2.0) + m_mapMidX;
+        double y_merc = world_y * (m_mapScale / 2.0) + m_mapMidY;
+
+        // Convert Mercator to Lat/Lon
+        // x_merc = lon_rad
+        // y_merc = 0.5 * log((1 + sin(lat)) / (1 - sin(lat)))
+        const double rad2deg = 180.0 / M_PI;
+        double lon = x_merc * rad2deg;
+        double lat_rad = 2.0 * std::atan(std::exp(y_merc)) - (M_PI / 2.0);
+        double lat = lat_rad * rad2deg;
+
+        // Find nearest node
+        int64_t nodeId = findNearestNode(lat, lon);
+        if (nodeId != 0) {
+            std::cout << "Selected Node: " << nodeId << " at " << lat << ", " << lon << "\n";
+            
+            if (panel.m_startNode == 0 || (panel.m_startNode != 0 && panel.m_endNode != 0)) {
+                // Set Start (reset if both were set)
+                panel.m_startNode = nodeId;
+                panel.m_endNode = 0;
+                panel.m_startLat = static_cast<float>(lat);
+                panel.m_startLon = static_cast<float>(lon);
+                m_renderer.clearPath(); // Clear previous path
+            } else {
+                // Set End
+                panel.m_endNode = nodeId;
+                panel.m_endLat = static_cast<float>(lat);
+                panel.m_endLon = static_cast<float>(lon);
+            }
+
+            // Update points rendering
+            std::vector<float> points;
+            
+            auto addPoint = [&](int64_t id) {
+                double nLat, nLon;
+                if (getNodeCoords(id, nLat, nLon)) {
+                    // Convert back to Normalized Map Coords
+                    double nLonRad = nLon * (M_PI / 180.0);
+                    double nLatRad = nLat * (M_PI / 180.0);
+                    double nXMerc = nLonRad;
+                    double nYMerc = 0.5 * std::log((1.0 + std::sin(nLatRad)) / (1.0 - std::sin(nLatRad)));
+                    
+                    float nX = static_cast<float>((nXMerc - m_mapMidX) * (2.0 / m_mapScale));
+                    float nY = static_cast<float>((nYMerc - m_mapMidY) * (2.0 / m_mapScale));
+                    
+                    points.push_back(nX);
+                    points.push_back(nY);
+                    points.push_back(0.0f);
+                }
+            };
+
+            if (panel.m_startNode != 0) addPoint(panel.m_startNode);
+            if (panel.m_endNode != 0) addPoint(panel.m_endNode);
+
+            m_renderer.setPoints(points);
         }
     }
 }

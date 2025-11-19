@@ -23,11 +23,16 @@ PathResult aStarWithCoords(double startLat, double startLon, double endLat, doub
 // Get node coordinates for a node ID (for path conversion)
 bool getNodeCoords(int64_t nodeId, double& lat, double& lon);
 
+// Find nearest node ID for a lat/lon
+int64_t findNearestNode(double lat, double lon);
+
 // Convert path node IDs to renderable vertices/indices
 // Uses the same coordinate transformation as the map (Web Mercator + normalization)
 // mapVertices: normalized map vertices from parseMap (used to calculate normalization params)
+// Convert path node IDs to renderable vertices/indices
+// Uses the same coordinate transformation as the map (Web Mercator + normalization)
 void convertPathToVertices(const std::vector<int64_t>& pathNodeIds,
-                          const std::vector<float>& mapVertices,
+                          float midX, float midY, float scale,
                           std::vector<float>& outVertices,
                           std::vector<unsigned int>& outIndices);
 
