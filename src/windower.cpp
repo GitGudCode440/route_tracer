@@ -7,8 +7,6 @@
 #include "a_star.hpp"
 
 
-// Modern Dark Theme Function
-// --------------------------
 void ApplyModernDarkTheme() {
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -109,18 +107,16 @@ void Windower::run() {
 
         panel.ShowUIPanel();
 
-        // Handle A* pathfinding requests from UI
         if (panel.m_runAStarWithNodes) {
-            panel.m_runAStarWithNodes = false; // Reset flag
+            panel.m_runAStarWithNodes = false;
             
             PathResult result = aStarWithNodes(panel.m_startNode, panel.m_endNode);
             if (result.found && !result.nodeIds.empty()) {
                 std::cout << "Path found with " << result.nodeIds.size() << " nodes\n";
-                // Convert path to vertices/indices
+               
                 std::vector<float> pathVertices;
                 std::vector<unsigned int> pathIndices;
                 
-                // Pass map normalization params
                 convertPathToVertices(result.nodeIds, m_mapMidX, m_mapMidY, m_mapScale, pathVertices, pathIndices);
                 
                 std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
@@ -132,13 +128,12 @@ void Windower::run() {
                 }
             } else {
                 std::cout << "No path found between nodes " << panel.m_startNode << " and " << panel.m_endNode << "\n";
-                // Clear path if not found
                 m_renderer.clearPath();
             }
         }
 
         if (panel.m_runAStarWithCoords) {
-            panel.m_runAStarWithCoords = false; // Reset flag
+            panel.m_runAStarWithCoords = false;
             
             PathResult result = aStarWithCoords(panel.m_startLat, panel.m_startLon, 
                                                panel.m_endLat, panel.m_endLon);
@@ -147,7 +142,7 @@ void Windower::run() {
                 std::vector<float> pathVertices;
                 std::vector<unsigned int> pathIndices;
                 
-                // Pass map normalization params
+            
                 convertPathToVertices(result.nodeIds, m_mapMidX, m_mapMidY, m_mapScale, pathVertices, pathIndices);
                 
                 std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
@@ -159,7 +154,7 @@ void Windower::run() {
                 }
             } else {
                 std::cout << "No path found between coordinates\n";
-                // Clear path if not found
+              
                 m_renderer.clearPath();
             }
         }
@@ -240,20 +235,17 @@ void Windower::handleMouseClick(int button, int action, double xpos, double ypos
             std::cout << "Selected Node: " << nodeId << " at " << lat << ", " << lon << "\n";
             
             if (panel.m_startNode == 0 || (panel.m_startNode != 0 && panel.m_endNode != 0)) {
-                // Set Start (reset if both were set)
                 panel.m_startNode = nodeId;
                 panel.m_endNode = 0;
                 panel.m_startLat = static_cast<float>(lat);
                 panel.m_startLon = static_cast<float>(lon);
-                m_renderer.clearPath(); // Clear previous path
+                m_renderer.clearPath();
             } else {
-                // Set End
                 panel.m_endNode = nodeId;
                 panel.m_endLat = static_cast<float>(lat);
                 panel.m_endLon = static_cast<float>(lon);
             }
 
-            // Update points rendering
             std::vector<float> points;
             
             auto addPoint = [&](int64_t id) {
@@ -293,7 +285,6 @@ void Windower::m_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
     win->m_lastMouseY = ypos;
 
     // convert pixel delta to world-space offset (account for aspect compensation)
-    // use window height for both axes so aspect compensation (height/width) is implicit
     float off_dx = static_cast<float>((2.0 * dx) / (static_cast<double>(win->m_windowHeight) * win->m_camScale));
     float off_dy = static_cast<float>((-2.0 * dy) / (static_cast<double>(win->m_windowHeight) * win->m_camScale));
 
@@ -314,8 +305,7 @@ void Windower::m_scrollCallback(GLFWwindow* window, double xoffset, double yoffs
     double ndc_x = (2.0 * cx) / static_cast<double>(win->m_windowWidth) - 1.0;
     double ndc_y = -((2.0 * cy) / static_cast<double>(win->m_windowHeight) - 1.0);
 
-    // compute scale factor
-    double factor = std::pow(1.125, yoffset); // ~12.5% per wheel tick
+    double factor = std::pow(1.125, yoffset);
     double oldScale = win->m_camScale;
     double newScale = oldScale * factor;
 

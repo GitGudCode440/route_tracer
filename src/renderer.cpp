@@ -14,11 +14,10 @@ void Renderer::render() const
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(m_shaderProgram);
     
-    // Render map with default orange color
+    //Render map
     if (m_uColorLoc >= 0) glUniform3f(m_uColorLoc, 0.91f, 0.44f, 0.11f);
     glBindVertexArray(m_VAO);
     
-    // If segment info is available, draw each segment as a line strip for continuous roads
     if (!m_segmentOffsets.empty() && m_segmentOffsets.size() == m_segmentLengths.size()) {
         for (size_t i = 0; i < m_segmentOffsets.size(); i++) {
             size_t offset = m_segmentOffsets[i];
@@ -31,21 +30,21 @@ void Renderer::render() const
         glDrawElements(m_drawMode, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, 0);
     }
 
-    // Render path if available with cyan color
+    // Render path
     if (m_hasPath && !m_pathIndices.empty() && m_pathVAO != 0) {
-        // Set camera uniforms for path (same as map)
+        
         if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
         if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
         if (m_uAspectLoc >= 0) glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
         if (m_uColorLoc >= 0) glUniform3f(m_uColorLoc, 0.0f, 1.0f, 1.0f);  // Cyan
         
         glBindVertexArray(m_pathVAO);
-        glLineWidth(3.0f);  // Make path thicker
+        glLineWidth(3.0f);  
         glDrawElements(GL_LINE_STRIP, static_cast<GLsizei>(m_pathIndices.size()), GL_UNSIGNED_INT, 0);
-        glLineWidth(1.5f);  // Reset to default
+        glLineWidth(1.5f);
     }
 
-    // Render points if available with red color
+    // Render points
     if (m_hasPoints && !m_pointVertices.empty() && m_pointVAO != 0) {
         if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
         if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
@@ -88,7 +87,6 @@ void Renderer::defineGeometry()
     m_shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
 
 
-    // get uniform locations for camera and set defaults
     m_uOffsetLoc = glGetUniformLocation(m_shaderProgram, "u_offset");
     m_uScaleLoc = glGetUniformLocation(m_shaderProgram, "u_scale");
     m_uAspectLoc = glGetUniformLocation(m_shaderProgram, "u_aspect");
@@ -96,7 +94,7 @@ void Renderer::defineGeometry()
     if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
     if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
     if (m_uAspectLoc >= 0) glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
-    // Default color (orange for map)
+
     if (m_uColorLoc >= 0) glUniform3f(m_uColorLoc, 0.91f, 0.44f, 0.11f);
 
     glLineWidth(1.5f);
@@ -206,13 +204,11 @@ void Renderer::setPathVertices(const std::vector<float>& vertices) {
 
     glBindVertexArray(m_pathVAO);
     
-    // Set up VBO
     glBindBuffer(GL_ARRAY_BUFFER, m_pathVBO);
     glBufferData(GL_ARRAY_BUFFER, m_pathVertices.size() * sizeof(float), m_pathVertices.data(), GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
     
-    // Make sure EBO is bound if indices were set before vertices
     if (!m_pathIndices.empty()) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_pathEBO);
     }
@@ -231,12 +227,10 @@ void Renderer::setPathIndices(const std::vector<unsigned int>& indices) {
 
     glBindVertexArray(m_pathVAO);
     
-    // Make sure VBO is bound (in case setPathVertices was called first)
     glBindBuffer(GL_ARRAY_BUFFER, m_pathVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
     
-    // Bind and set EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_pathEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_pathIndices.size() * sizeof(unsigned int), m_pathIndices.data(), GL_DYNAMIC_DRAW);
     

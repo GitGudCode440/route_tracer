@@ -33,7 +33,6 @@ public:
     float m_camOY;
     float m_camScale;
 
-    // Map normalization params
     float m_mapMidX = 0.0f;
     float m_mapMidY = 0.0f;
     float m_mapScale = 1.0f;
