@@ -19,6 +19,12 @@ private:
 
     GLuint m_VAO, m_VBO, m_EBO;
 
+    // Path rendering (separate from map)
+    std::vector<float> m_pathVertices;
+    std::vector<unsigned int> m_pathIndices;
+    GLuint m_pathVAO, m_pathVBO, m_pathEBO;
+    bool m_hasPath = false;
+
     GLenum m_drawMode;
     std::vector<size_t> m_segmentOffsets;
     std::vector<size_t> m_segmentLengths;
@@ -30,6 +36,7 @@ private:
     GLint m_uOffsetLoc = -1;
     GLint m_uScaleLoc = -1;
     GLint m_uAspectLoc = -1;
+    GLint m_uColorLoc = -1;
     float m_camOffsetX = 0.0f;
     float m_camOffsetY = 0.0f;
     float m_camScale = 1.0f;
@@ -55,6 +62,11 @@ public:
         m_segmentOffsets = offsets;
         m_segmentLengths = lengths;
     }
+
+    // Path rendering methods
+    void setPathVertices(const std::vector<float>& vertices);
+    void setPathIndices(const std::vector<unsigned int>& indices);
+    void clearPath();
 
     void render() const;
     void defineGeometry();

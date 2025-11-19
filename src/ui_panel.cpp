@@ -19,8 +19,8 @@ void UIPanel::ShowUIPanel()
 
     if (mode == 0) {
         ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.3f, 1.0f), "Node Search");
-        ImGui::InputInt("Start Node", &m_startNode);
-        ImGui::InputInt("End Node", &m_endNode);
+        ImGui::InputScalar("Start Node", ImGuiDataType_S64, &m_startNode, nullptr, nullptr, "%lld", ImGuiInputTextFlags_None);
+        ImGui::InputScalar("End Node", ImGuiDataType_S64, &m_endNode, nullptr, nullptr, "%lld", ImGuiInputTextFlags_None);
         if (ImGui::Button("Run A* (Node IDs)")) m_runAStarWithNodes = true;
         ImGui::Spacing();
     }

@@ -2,10 +2,11 @@
 #define IMGUI_PANEL_HPP
 
 #include <imgui.h>
+#include <cstdint>
 
 struct UIPanel {
 
-    int m_startNode = 0, m_endNode = 0;
+    int64_t m_startNode = 0, m_endNode = 0;
     bool m_runAStarWithNodes = false;
     bool m_runAStarWithCoords = false;
 

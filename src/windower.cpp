@@ -1,8 +1,10 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 #include "ui_panel.hpp"
 #include "windower.hpp"
+#include "a_star.hpp"
 
 
 // Modern Dark Theme Function
@@ -106,6 +108,61 @@ void Windower::run() {
 
 
         panel.ShowUIPanel();
+
+        // Handle A* pathfinding requests from UI
+        if (panel.m_runAStarWithNodes) {
+            panel.m_runAStarWithNodes = false; // Reset flag
+            
+            PathResult result = aStarWithNodes(panel.m_startNode, panel.m_endNode);
+            if (result.found && !result.nodeIds.empty()) {
+                std::cout << "Path found with " << result.nodeIds.size() << " nodes\n";
+                // Convert path to vertices/indices
+                std::vector<float> pathVertices;
+                std::vector<unsigned int> pathIndices;
+                
+                // Pass empty mapVertices - function will calculate normalization from A* nodes
+                convertPathToVertices(result.nodeIds, std::vector<float>(), pathVertices, pathIndices);
+                
+                std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
+                if (!pathVertices.empty() && !pathIndices.empty()) {
+                    m_renderer.setPathVertices(pathVertices);
+                    m_renderer.setPathIndices(pathIndices);
+                } else {
+                    std::cout << "ERROR: Path vertices/indices are empty after conversion!\n";
+                }
+            } else {
+                std::cout << "No path found between nodes " << panel.m_startNode << " and " << panel.m_endNode << "\n";
+                // Clear path if not found
+                m_renderer.clearPath();
+            }
+        }
+
+        if (panel.m_runAStarWithCoords) {
+            panel.m_runAStarWithCoords = false; // Reset flag
+            
+            PathResult result = aStarWithCoords(panel.m_startLat, panel.m_startLon, 
+                                               panel.m_endLat, panel.m_endLon);
+            if (result.found && !result.nodeIds.empty()) {
+                std::cout << "Path found with " << result.nodeIds.size() << " nodes\n";
+                std::vector<float> pathVertices;
+                std::vector<unsigned int> pathIndices;
+                
+                // Pass empty mapVertices - function will calculate normalization from A* nodes
+                convertPathToVertices(result.nodeIds, std::vector<float>(), pathVertices, pathIndices);
+                
+                std::cout << "Converted to " << pathVertices.size()/3 << " vertices and " << pathIndices.size() << " indices\n";
+                if (!pathVertices.empty() && !pathIndices.empty()) {
+                    m_renderer.setPathVertices(pathVertices);
+                    m_renderer.setPathIndices(pathIndices);
+                } else {
+                    std::cout << "ERROR: Path vertices/indices are empty after conversion!\n";
+                }
+            } else {
+                std::cout << "No path found between coordinates\n";
+                // Clear path if not found
+                m_renderer.clearPath();
+            }
+        }
 
 
         m_renderer.render();
