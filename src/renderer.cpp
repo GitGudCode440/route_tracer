@@ -4,6 +4,7 @@ Renderer::Renderer() {
     readShader("res/shaders/basic.shader");
 }
 
+
 void Renderer::render() const
 {   
     glClear(GL_COLOR_BUFFER_BIT);
@@ -26,22 +27,20 @@ void Renderer::render() const
 
 void Renderer::defineGeometry() 
 {
-    GLuint VBO;
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &m_VBO);
 
     glGenVertexArrays(1, &m_VAO);
 
-    GLuint EBO;
-    glGenBuffers(1, &EBO);
+    glGenBuffers(1, &m_EBO);
 
     glBindVertexArray(m_VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), m_indices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
@@ -52,8 +51,7 @@ void Renderer::defineGeometry()
 
     GLuint fragmentShader = createShader(GL_FRAGMENT_SHADER, m_fragmentShaderSource);
 
-    GLuint shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
-    m_shaderProgram = shaderProgram;
+    m_shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
 
 
     // get uniform locations for camera and set defaults

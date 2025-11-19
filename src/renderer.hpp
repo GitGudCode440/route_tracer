@@ -17,7 +17,8 @@ private:
     std::vector<float> m_vertices;
     std::vector<unsigned int> m_indices;
 
-    GLuint m_VAO;
+    GLuint m_VAO, m_VBO, m_EBO;
+
     GLenum m_drawMode;
     std::vector<size_t> m_segmentOffsets;
     std::vector<size_t> m_segmentLengths;
@@ -45,20 +46,16 @@ public:
     Renderer();
     ~Renderer() = default;
 
-    void setDrawMode(GLenum mode) { m_drawMode = mode; }
-
-
     void setCamera(float ox, float oy, float scale);
     void setViewportSize(int width, int height);
-
+    void setVertices(const std::vector<float>& arr) { m_vertices = arr; }
+    void setIndices(const std::vector<unsigned int>& arr) { m_indices = arr; }
+    void setDrawMode(GLenum mode) { m_drawMode = mode; }
     void setSegmentInfo(const std::vector<size_t>& offsets, const std::vector<size_t>& lengths) {
         m_segmentOffsets = offsets;
         m_segmentLengths = lengths;
     }
-    void setVertices(const std::vector<float>& arr) { m_vertices = arr; }
-    void setIndices(const std::vector<unsigned int>& arr) { m_indices = arr; }
 
-    
     void render() const;
     void defineGeometry();
 };

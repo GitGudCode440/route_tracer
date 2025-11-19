@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "imgui_panel.hpp"
+#include "ui_panel.hpp"
 #include "windower.hpp"
 
 
@@ -105,7 +105,7 @@ void Windower::run() {
         ImGui::NewFrame();
 
 
-        ShowUIPanel(*this);
+        panel.ShowUIPanel();
 
 
         m_renderer.render();
@@ -180,7 +180,6 @@ void Windower::m_scrollCallback(GLFWwindow* window, double xoffset, double yoffs
     double newScale = oldScale * factor;
 
     
-    // convert screen NDC to world-space coordinates used by shader
     double aspect = static_cast<double>(win->m_windowHeight) / static_cast<double>(win->m_windowWidth);
     double screennx_world = ndc_x / (oldScale * aspect);
     double screenny_world = ndc_y / oldScale;
@@ -196,7 +195,6 @@ void Windower::resizeViewport(GLFWwindow* window, int width, int height) {
     m_windowWidth = width;
     m_windowHeight = height;
     glViewport(0, 0, m_windowWidth, m_windowHeight);
-    // inform renderer so it can update aspect uniform
     m_renderer.setViewportSize(m_windowWidth, m_windowHeight);
 }
 
