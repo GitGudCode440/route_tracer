@@ -10,7 +10,7 @@ void UIPanel::ShowUIPanel()
     ImGui::Separator();
     ImGui::Spacing();
 
-    int mode = 0;  // 0 = Node IDs, 1 = Coordinates
+    static int mode = 0;  // 0 = Node IDs, 1 = Coordinates
     ImGui::Text("Select Pathfinding Mode:");
     ImGui::RadioButton("Node IDs", &mode, 0);
     ImGui::SameLine();
@@ -47,6 +47,8 @@ void UIPanel::ShowUIPanel()
 
     ImGui::TextColored(ImVec4(0.5f, 0.7f, 1.0f, 1.0f), "Path Color");
     ImGui::ColorEdit3("Path Color", m_pathColor);
+
+    
 
     ImGui::End();
 }
