@@ -9,13 +9,15 @@ void Renderer::render() const
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(m_shaderProgram);
     glBindVertexArray(m_VAO);
+    
     // If segment info is available, draw each segment as a line strip for continuous roads
     if (!m_segmentOffsets.empty() && m_segmentOffsets.size() == m_segmentLengths.size()) {
-        for (size_t i = 0; i < m_segmentOffsets.size(); ++i) {
+        for (size_t i = 0; i < m_segmentOffsets.size(); i++) {
             size_t offset = m_segmentOffsets[i];
             size_t len = m_segmentLengths[i];
             if (len < 2) continue;
-            glDrawElements(GL_LINE_STRIP, static_cast<GLsizei>(len), GL_UNSIGNED_INT, reinterpret_cast<const void*>(offset * sizeof(unsigned int)));
+
+            glDrawElements(m_drawMode, len, GL_UNSIGNED_INT, reinterpret_cast<const void*>(offset * sizeof(unsigned int)));
         }
     } else {
         glDrawElements(m_drawMode, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, 0);
@@ -46,26 +48,22 @@ void Renderer::defineGeometry()
     glEnableVertexAttribArray(0);
 
 
-    // Vertex shader
     GLuint vertexShader = createShader(GL_VERTEX_SHADER, m_vertexShaderSource);
 
-    //Fragment shader
     GLuint fragmentShader = createShader(GL_FRAGMENT_SHADER, m_fragmentShaderSource);
 
-    //Linking shaders into a program
     GLuint shaderProgram = linkShadersIntoProgram({vertexShader, fragmentShader});
     m_shaderProgram = shaderProgram;
 
-    // default draw mode
-    m_drawMode = GL_TRIANGLES;
 
     // get uniform locations for camera and set defaults
     m_uOffsetLoc = glGetUniformLocation(m_shaderProgram, "u_offset");
     m_uScaleLoc = glGetUniformLocation(m_shaderProgram, "u_scale");
+    m_uAspectLoc = glGetUniformLocation(m_shaderProgram, "u_aspect");
     if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
     if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
+    if (m_uAspectLoc >= 0) glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
 
-    // make lines more visible
     glLineWidth(1.5f);
 }
 
@@ -138,4 +136,25 @@ GLuint Renderer::linkShadersIntoProgram(const std::vector<GLuint>&& shaders) {
 
 
     return shaderProgram;
+}
+
+void Renderer::setCamera(float ox, float oy, float scale) {
+    m_camOffsetX = ox;
+    m_camOffsetY = oy;
+    m_camScale = scale;
+    if (m_shaderProgram) {
+        glUseProgram(m_shaderProgram);
+        if (m_uOffsetLoc >= 0) glUniform2f(m_uOffsetLoc, m_camOffsetX, m_camOffsetY);
+        if (m_uScaleLoc >= 0) glUniform1f(m_uScaleLoc, m_camScale);
+        if (m_uAspectLoc >= 0) glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
+    }
+}
+
+void Renderer::setViewportSize(int width, int height) {
+    m_viewportWidth = width;
+    m_viewportHeight = height;
+    if (m_shaderProgram && m_uAspectLoc >= 0) {
+        glUseProgram(m_shaderProgram);
+        glUniform1f(m_uAspectLoc, static_cast<float>(m_viewportHeight) / static_cast<float>(m_viewportWidth));
+    }
 }

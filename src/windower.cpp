@@ -92,6 +92,7 @@ Windower::Windower(Renderer& renderer, int windowWidth, int windowHeight)
 
     m_renderer.defineGeometry();
     m_renderer.setCamera(m_camOX, m_camOY, m_camScale);
+    m_renderer.setViewportSize(m_windowWidth, m_windowHeight);
 }
 
 void Windower::run() {
@@ -104,7 +105,7 @@ void Windower::run() {
         ImGui::NewFrame();
 
 
-        ShowRouteTracerPanel(*this);
+        ShowUIPanel(*this);
 
 
         m_renderer.render();
@@ -151,13 +152,10 @@ void Windower::m_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
     win->m_lastMouseX = xpos;
     win->m_lastMouseY = ypos;
 
-    // convert pixel delta to NDC delta
-    double ndc_dx = (2.0 * dx) / static_cast<double>(win->m_windowWidth);
-    double ndc_dy = (-2.0 * dy) / static_cast<double>(win->m_windowHeight);
-
-    // account for camera scale
-    float off_dx = static_cast<float>(ndc_dx) / win->m_camScale;
-    float off_dy = static_cast<float>(ndc_dy) / win->m_camScale;
+    // convert pixel delta to world-space offset (account for aspect compensation)
+    // use window height for both axes so aspect compensation (height/width) is implicit
+    float off_dx = static_cast<float>((2.0 * dx) / (static_cast<double>(win->m_windowHeight) * win->m_camScale));
+    float off_dy = static_cast<float>((-2.0 * dy) / (static_cast<double>(win->m_windowHeight) * win->m_camScale));
 
     win->m_camOX += off_dx;
     win->m_camOY += off_dy;
@@ -182,11 +180,13 @@ void Windower::m_scrollCallback(GLFWwindow* window, double xoffset, double yoffs
     double newScale = oldScale * factor;
 
     
-    double screennx = ndc_x;
-    double screenny = ndc_y;
+    // convert screen NDC to world-space coordinates used by shader
+    double aspect = static_cast<double>(win->m_windowHeight) / static_cast<double>(win->m_windowWidth);
+    double screennx_world = ndc_x / (oldScale * aspect);
+    double screenny_world = ndc_y / oldScale;
 
-    win->m_camOX = static_cast<float>(win->m_camOX + screennx * (1.0/newScale - 1.0/oldScale));
-    win->m_camOY = static_cast<float>(win->m_camOY + screenny * (1.0/newScale - 1.0/oldScale));
+    win->m_camOX = static_cast<float>(win->m_camOX + screennx_world * (1.0/newScale - 1.0/oldScale));
+    win->m_camOY = static_cast<float>(win->m_camOY + screenny_world * (1.0/newScale - 1.0/oldScale));
     win->m_camScale = static_cast<float>(newScale);
 
     win->m_renderer.setCamera(win->m_camOX, win->m_camOY, win->m_camScale);
@@ -196,6 +196,8 @@ void Windower::resizeViewport(GLFWwindow* window, int width, int height) {
     m_windowWidth = width;
     m_windowHeight = height;
     glViewport(0, 0, m_windowWidth, m_windowHeight);
+    // inform renderer so it can update aspect uniform
+    m_renderer.setViewportSize(m_windowWidth, m_windowHeight);
 }
 
 void Windower::m_framebufferSizeCallback(GLFWwindow* window, int width, int height) {

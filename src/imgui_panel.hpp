@@ -4,8 +4,8 @@
 #include "imgui.h"
 #include "windower.hpp"
 
-inline void ShowRouteTracerPanel(Windower& win) {
-    ImGui::Begin("🚀 Karachi Route Tracer");
+inline void ShowUIPanel(Windower& win) {
+    ImGui::Begin("Karachi Route Tracer");
 
     ImGui::TextColored(ImVec4(0.6f, 0.9f, 1.0f, 1.0f), "Pathfinding Controls");
     ImGui::Separator();
@@ -19,7 +19,7 @@ inline void ShowRouteTracerPanel(Windower& win) {
     ImGui::Spacing();
 
     if (mode == 0) {
-        ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.3f, 1.0f), "📍 Node Search");
+        ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.3f, 1.0f), "Node Search");
         ImGui::InputInt("Start Node", &win.m_startNode);
         ImGui::InputInt("End Node", &win.m_endNode);
         if (ImGui::Button("Run A* (Node IDs)")) win.m_runAStarWithNodes = true;
@@ -27,7 +27,7 @@ inline void ShowRouteTracerPanel(Windower& win) {
     }
 
     if (mode == 1) {
-        ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "📌 Coordinate Search");
+        ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "Coordinate Search");
 
         ImGui::Text("Start Location:");
         ImGui::InputFloat("Start Latitude", &win.m_startLat, 0.0f, 0.0f, "%.6f");
@@ -42,11 +42,11 @@ inline void ShowRouteTracerPanel(Windower& win) {
         ImGui::Spacing();
     }
 
-    ImGui::TextColored(ImVec4(0.9f, 0.5f, 0.2f, 1.0f), "🔍 Search Road");
+    ImGui::TextColored(ImVec4(0.9f, 0.5f, 0.2f, 1.0f), "Search Road");
     ImGui::InputText("Road Name", win.m_searchBuffer, IM_ARRAYSIZE(win.m_searchBuffer));
     if (ImGui::Button("Search")) win.m_searchRequested = true;
 
-    ImGui::TextColored(ImVec4(0.5f, 0.7f, 1.0f, 1.0f), "🎨 Path Color");
+    ImGui::TextColored(ImVec4(0.5f, 0.7f, 1.0f, 1.0f), "Path Color");
     ImGui::ColorEdit3("Path Color", win.m_pathColor);
 
     ImGui::End();
